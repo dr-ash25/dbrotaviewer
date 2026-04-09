@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
   <style>
     :root, [data-theme="light"] {
       --color-bg: #f7f6f2;
@@ -30,8 +30,6 @@
       --shadow-md: 0 8px 24px rgba(0,0,0,.08);
       --radius-md: 12px;
       --radius-lg: 18px;
-      --space-4: 1rem;
-      --space-6: 1.5rem;
       --font-body: 'Inter', system-ui, sans-serif;
     }
     [data-theme="dark"] {
@@ -48,80 +46,145 @@
       --shadow-md: 0 8px 24px rgba(0,0,0,.4);
     }
     * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; }
+    html, body { margin: 0; padding: 0; height: 100%; }
     body {
-      min-height: 100vh;
+      min-height: 100dvh;
       font-family: var(--font-body);
       color: var(--color-text);
       background: linear-gradient(180deg, var(--color-bg), var(--color-surface-2));
     }
-    .app { max-width: 1200px; margin: 0 auto; padding: var(--space-6); }
-    .toolbar { display: grid; grid-template-columns: 1fr auto; gap: var(--space-4); align-items: start; margin-bottom: var(--space-6); }
-    .title-card, .panel, .legend-card {
+    .app {
+      min-height: 100dvh;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+    }
+    .topbar {
+      display:flex; justify-content:space-between; align-items:center; gap:.75rem;
+      padding: .85rem 1rem; position: sticky; top: 0; z-index: 30;
+      background: color-mix(in srgb, var(--color-bg) 88%, transparent);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent);
+    }
+    .topbar-left { display:flex; align-items:center; gap:.75rem; min-width:0; }
+    .mini-mark {
+      width: 38px; height: 38px; border-radius: 10px; background: var(--color-primary);
+      display:grid; place-items:center; color: var(--color-text-inverse); font-weight:700;
+      box-shadow: var(--shadow-sm);
+    }
+    .mini-title { margin:0; font-size:1rem; line-height:1.1; }
+    .mini-subtitle { margin:.18rem 0 0; font-size:.85rem; color: var(--color-text-muted); }
+    .topbar-actions { display:flex; gap:.5rem; flex-wrap:wrap; justify-content:flex-end; }
+    .control-strip {
+      display:flex; gap:.75rem; flex-wrap:wrap; align-items:center;
+      padding: .75rem 1rem;
+      background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+      border-bottom:1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+    }
+    .workspace {
+      min-height: 0;
+      display:grid;
+      grid-template-columns: 1fr 300px;
+    }
+    .calendar-wrap { min-width:0; min-height:0; padding:.75rem; }
+    .panel, .legend-card {
       background: color-mix(in srgb, var(--color-surface) 94%, transparent);
       border: 1px solid color-mix(in srgb, var(--color-text) 12%, transparent);
       border-radius: var(--radius-lg);
       box-shadow: var(--shadow-sm);
       backdrop-filter: blur(8px);
     }
-    .title-card, .panel, .legend-card { padding: var(--space-6); }
-    .eyebrow { font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; color: var(--color-text-muted); margin-bottom: .5rem; }
-    h1 { margin: 0 0 .5rem; font-size: clamp(1.8rem, 3vw, 2.7rem); line-height: 1.1; }
-    .subtitle { margin: 0; color: var(--color-text-muted); max-width: 60ch; }
-    .actions { display: flex; gap: .75rem; flex-wrap: wrap; justify-content: flex-end; }
+    .panel { height: calc(100dvh - 145px); padding: .5rem; }
+    .legend-card {
+      height: calc(100dvh - 145px); margin: .75rem .75rem .75rem 0; padding: 1rem;
+      overflow: auto; border-radius: 18px;
+    }
+    .legend-list { display:grid; gap:.7rem; margin-top:1rem; }
+    .legend-item { display:grid; grid-template-columns:18px 1fr; gap:.75rem; align-items:center; color:var(--color-text-muted); font-size:.95rem; }
+    .swatch { width:18px; height:18px; border-radius:6px; border:1px solid rgba(0,0,0,.08); }
+    .hint { margin-top: 1rem; font-size: .92rem; color: var(--color-text-muted); line-height: 1.5; }
+    .collapsible { overflow:hidden; transition:max-height 220ms ease, opacity 180ms ease, margin 180ms ease, padding 180ms ease, border-width 180ms ease; }
+    .is-collapsed { max-height:0 !important; opacity:0; margin:0 !important; padding-top:0 !important; padding-bottom:0 !important; border-width:0 !important; }
     button, .file-label {
-      min-height: 44px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--color-text) 12%, transparent);
-      background: var(--color-surface); color: var(--color-text); padding: .75rem 1rem; font: inherit; cursor: pointer;
+      min-height: 44px; border-radius: 999px;
+      border: 1px solid color-mix(in srgb, var(--color-text) 12%, transparent);
+      background: var(--color-surface); color: var(--color-text); padding: .75rem 1rem;
+      font: inherit; cursor: pointer;
     }
     button.primary { background: var(--color-primary); color: var(--color-text-inverse); border-color: transparent; }
-    input[type="file"] { display: none; }
-    .workspace { display: grid; grid-template-columns: 1fr 290px; gap: var(--space-6); }
-    .legend-card { align-self: start; position: sticky; top: 1rem; }
-    .legend-list { display: grid; gap: .75rem; margin-top: 1rem; }
-    .legend-item { display: grid; grid-template-columns: 18px 1fr; gap: .75rem; align-items: center; color: var(--color-text-muted); font-size: .95rem; }
-    .swatch { width: 18px; height: 18px; border-radius: 6px; border: 1px solid rgba(0,0,0,.08); }
-    .hint { margin-top: 1rem; font-size: .92rem; color: var(--color-text-muted); line-height: 1.5; }
-    .fc { --fc-border-color: var(--color-divider); --fc-page-bg-color: transparent; --fc-neutral-bg-color: transparent; color: var(--color-text); }
-    .fc .fc-toolbar-title { font-size: 1.2rem; font-weight: 700; }
+    input[type="file"] { display:none; }
+    .fc { --fc-border-color: var(--color-divider); --fc-page-bg-color: transparent; --fc-neutral-bg-color: transparent; color: var(--color-text); height:100%; }
+    .fc .fc-toolbar { gap: .5rem; }
+    .fc .fc-toolbar-title { font-size: 1.15rem; font-weight: 700; }
     .fc .fc-button { background: var(--color-surface); border: 1px solid color-mix(in srgb, var(--color-text) 12%, transparent); color: var(--color-text); text-transform: capitalize; box-shadow: none; }
     .fc .fc-button-primary:not(:disabled).fc-button-active, .fc .fc-button-primary:not(:disabled):active { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-text-inverse); }
     .fc-theme-standard td, .fc-theme-standard th { border-color: var(--color-divider); }
-    .fc .fc-daygrid-day-frame { min-height: 110px; padding: .35rem; border-radius: 12px; transition: background-color 180ms ease; }
+    .fc .fc-daygrid-day-frame { min-height: clamp(84px, 10vh, 130px); padding: .35rem; border-radius: 12px; transition: background-color 180ms ease; }
     .fc .fc-daygrid-day-number { font-weight: 700; color: var(--color-text); padding: .25rem .45rem; border-radius: 999px; background: color-mix(in srgb, var(--color-surface) 84%, transparent); }
     .fc-event { border: 0; border-radius: 10px; padding: 2px 4px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); }
     .fc-event-title { font-weight: 600; white-space: normal; }
     .empty { padding: 2rem; color: var(--color-text-muted); text-align: center; }
-    @media (max-width: 960px) { .workspace { grid-template-columns: 1fr; } .legend-card { position: static; } .toolbar { grid-template-columns: 1fr; } .actions { justify-content: flex-start; } }
+    @media (max-width: 960px) {
+      .workspace { grid-template-columns: 1fr; }
+      .legend-card { height:auto; max-height: 40dvh; margin: 0 .75rem .75rem; }
+      .panel { height: calc(100dvh - 180px); }
+    }
+    @media (max-width: 640px) {
+      .topbar { align-items:flex-start; flex-direction:column; }
+      .topbar-actions { justify-content:flex-start; }
+      .mini-subtitle { display:none; }
+      .control-strip, .topbar { padding: .7rem; }
+      .calendar-wrap { padding: .45rem; }
+      .panel { padding: .35rem; height: calc(100dvh - 195px); }
+      .fc .fc-toolbar { flex-wrap: wrap; }
+      .fc .fc-toolbar-title { width: 100%; order: -1; font-size: 1rem; }
+      .fc .fc-button { padding: .45rem .6rem; font-size: .86rem; }
+      .fc .fc-col-header-cell-cushion { font-size: .78rem; }
+      .fc .fc-daygrid-day-number { font-size: .84rem; }
+    }
   </style>
 </head>
 <body>
   <main class="app">
-    <header class="toolbar">
-      <section class="title-card">
-        <div class="eyebrow">GitHub Pages ready</div>
-        <h1>dbRotas viewer</h1>
-        <p class="subtitle">Load a rota CSV or JSON file and view it in a dbRotas-style FullCalendar with matching colors and light/dark mode. This static app can be hosted on GitHub Pages.</p>
-      </section>
-      <div class="actions">
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="mini-mark" aria-hidden="true">R</div>
+        <div>
+          <p class="mini-title">dbRotas viewer</p>
+          <p class="mini-subtitle">Responsive calendar viewer with collapsible panels</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
         <label class="file-label" for="fileInput">Load CSV or JSON</label>
         <input id="fileInput" type="file" accept=".csv,.json,application/json,text/csv">
         <button id="useSample" class="primary" type="button">Use sample data</button>
         <button id="themeToggle" type="button">Dark mode</button>
       </div>
     </header>
+
+    <section id="headerPanel" class="control-strip collapsible">
+      <button id="toggleHeader" type="button">Hide header help</button>
+      <button id="toggleLegendMobile" type="button">Toggle legend</button>
+      <span style="color:var(--color-text-muted);">Collapse the panels when you want the calendar to occupy almost the full screen.</span>
+    </section>
+
     <section class="workspace">
-      <div class="panel">
-        <div id="calendar"></div>
-        <div id="emptyState" class="empty" hidden>Load a CSV or JSON file to display your rota.</div>
+      <div class="calendar-wrap">
+        <div class="panel">
+          <div id="calendar" style="height:100%;"></div>
+          <div id="emptyState" class="empty" hidden>Load a CSV or JSON file to display your rota.</div>
+        </div>
       </div>
-      <aside class="legend-card">
-        <h2 style="margin:0;font-size:1.05rem;">Legend</h2>
+      <aside id="legendPanel" class="legend-card collapsible">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:.75rem;">
+          <h2 style="margin:0;font-size:1.05rem;">Legend</h2>
+          <button id="toggleLegend" type="button">Hide</button>
+        </div>
         <div id="legend" class="legend-list"></div>
         <p class="hint">CSV columns: date, shift_text, shift_code, bg_color_hex/bg_color_rgb, text_color_hex/text_color_rgb. JSON should be an array of matching objects.</p>
       </aside>
     </section>
   </main>
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
+
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(() => {}));
@@ -137,6 +200,11 @@
     const legendEl = document.getElementById('legend');
     const fileInput = document.getElementById('fileInput');
     const themeToggle = document.getElementById('themeToggle');
+    const headerPanel = document.getElementById('headerPanel');
+    const legendPanel = document.getElementById('legendPanel');
+    const toggleHeaderBtn = document.getElementById('toggleHeader');
+    const toggleLegendBtn = document.getElementById('toggleLegend');
+    const toggleLegendMobileBtn = document.getElementById('toggleLegendMobile');
     let themeMode = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     document.documentElement.setAttribute('data-theme', themeMode);
     themeToggle.textContent = themeMode === 'dark' ? 'Light mode' : 'Dark mode';
@@ -190,9 +258,19 @@
         legendEl.appendChild(item);
       });
     }
+    function hexToTint(hex, alpha = 0.24) {
+      const value = hex.replace('#', ''); const full = value.length === 3 ? value.split('').map(c => c + c).join('') : value;
+      const r = parseInt(full.slice(0, 2), 16), g = parseInt(full.slice(2, 4), 16), b = parseInt(full.slice(4, 6), 16);
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
     let colorByDate = {};
     const calendar = new FullCalendar.Calendar(calendarEl, {
-      initialView: 'dayGridMonth', initialDate: '2026-04-01', fixedWeekCount: false,
+      initialView: 'dayGridMonth',
+      initialDate: '2026-04-01',
+      fixedWeekCount: false,
+      height: '100%',
+      contentHeight: 'auto',
+      expandRows: true,
       headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth' },
       eventDidMount(info) {
         const bg = info.event.extendedProps.dbrotasColor || info.event.backgroundColor;
@@ -204,21 +282,53 @@
         if (tint) info.el.querySelector('.fc-daygrid-day-frame').style.backgroundColor = hexToTint(tint, 0.24);
       }
     });
-    function hexToTint(hex, alpha = 0.22) {
-      const value = hex.replace('#', ''); const full = value.length === 3 ? value.split('').map(c => c + c).join('') : value;
-      const r = parseInt(full.slice(0, 2), 16), g = parseInt(full.slice(2, 4), 16), b = parseInt(full.slice(4, 6), 16);
-      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-    }
     function renderRows(rows) {
-      const events = rowsToEvents(rows); colorByDate = Object.fromEntries(events.map(e => [e.start, e.extendedProps.dbrotasColor]));
-      calendar.removeAllEvents(); events.forEach(event => calendar.addEvent(event)); buildLegend(events); emptyState.hidden = events.length > 0; calendar.render();
+      const events = rowsToEvents(rows);
+      colorByDate = Object.fromEntries(events.map(e => [e.start, e.extendedProps.dbrotasColor]));
+      calendar.removeAllEvents();
+      events.forEach(event => calendar.addEvent(event));
+      buildLegend(events);
+      emptyState.hidden = events.length > 0;
+      calendar.render();
+      requestAnimationFrame(() => calendar.updateSize());
     }
+    function setCollapsed(el, collapsed) {
+      el.classList.toggle('is-collapsed', collapsed);
+      requestAnimationFrame(() => calendar.updateSize());
+    }
+    let headerCollapsed = false;
+    let legendCollapsed = window.innerWidth <= 960;
+    toggleHeaderBtn.addEventListener('click', () => {
+      headerCollapsed = !headerCollapsed;
+      setCollapsed(headerPanel, headerCollapsed);
+      toggleHeaderBtn.textContent = headerCollapsed ? 'Show header help' : 'Hide header help';
+    });
+    function syncLegendButtons() {
+      const hidden = legendPanel.classList.contains('is-collapsed');
+      toggleLegendBtn.textContent = hidden ? 'Show' : 'Hide';
+      toggleLegendMobileBtn.textContent = hidden ? 'Show legend' : 'Hide legend';
+    }
+    function toggleLegend() {
+      legendCollapsed = !legendCollapsed;
+      setCollapsed(legendPanel, legendCollapsed);
+      syncLegendButtons();
+    }
+    toggleLegendBtn.addEventListener('click', toggleLegend);
+    toggleLegendMobileBtn.addEventListener('click', toggleLegend);
     fileInput.addEventListener('change', async (event) => {
       const file = event.target.files?.[0]; if (!file) return;
       const text = await file.text(); const rows = file.name.toLowerCase().endsWith('.json') ? JSON.parse(text) : parseCSV(text); renderRows(rows);
     });
+    themeToggle.addEventListener('click', () => {
+      themeMode = themeMode === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', themeMode);
+      themeToggle.textContent = themeMode === 'dark' ? 'Light mode' : 'Dark mode';
+      calendar.updateSize();
+    });
+    window.addEventListener('resize', () => calendar.updateSize());
+    setCollapsed(legendPanel, legendCollapsed);
+    syncLegendButtons();
     document.getElementById('useSample').addEventListener('click', () => renderRows(sampleRows));
-    themeToggle.addEventListener('click', () => { themeMode = themeMode === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', themeMode); themeToggle.textContent = themeMode === 'dark' ? 'Light mode' : 'Dark mode'; });
     renderRows(sampleRows);
   </script>
 </body>
